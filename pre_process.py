@@ -58,18 +58,30 @@ def build_sentences_xhj():
     return sentences
 
 
+def parse_ptt_lines(lines):
+    result = []
+    for s in lines:
+        s = s.strip()
+        if not s:
+            continue
+        parts = s.split('\t')
+        if len(parts) == 2:
+            q = parts[0].strip()
+            a = parts[1].strip()
+            if q and a:
+                result.append(q)
+                result.append(a)
+    return result
+
+
 def build_sentences_ptt():
     with open(ptt_corpus_loc, 'r', encoding="utf8") as f:
-        sentences = f.readlines()
-    print('total lines: ' + str(len(sentences)))
+        lines = f.readlines()
+    print('total lines: ' + str(len(lines)))
 
-    result = []
-    for s in sentences:
-        if len(s.strip()) > 0:
-            for i in s.split('\t'):
-                result.append(i.strip())
+    result = parse_ptt_lines(lines)
     print(len(result))
-    print('removed empty lines: ' + str(len(result)))
+    print('removed empty lines and invalid QA pairs: ' + str(len(result)))
 
     return result
 
@@ -81,11 +93,18 @@ def save_data(data, filename):
 
 
 if __name__ == '__main__':
-    # for xiaohuangji
-    # sentences = build_sentences_xhj()
-    # for ptt
-    sentences = build_sentences_ptt()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--corpus', '-c', type=str, default='xhj', choices=['xhj', 'ptt'], help='Choose corpus: xhj or ptt')
+    args = parser.parse_args()
+
+    if args.corpus == 'ptt':
+        sentences = build_sentences_ptt()
+    else:
+        sentences = build_sentences_xhj()
+
     word_map = build_wordmap(sentences)
     save_data(word_map, wordmap_loc)
     samples = build_samples(sentences, word_map)
     save_data(samples, samples_loc)
+

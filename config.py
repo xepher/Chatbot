@@ -9,10 +9,25 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 xhj_corpus_url = 'https://github.com/candlewill/Dialog_Corpus/raw/master/xiaohuangji50w_nofenci.conv.zip'
 ptt_corpus_url = 'https://github.com/zake7749/Gossiping-Chinese-Corpus/raw/master/data/Gossiping-QA-Dataset.txt'
 
+import sys
+
 xhj_corpus_loc = 'data/xiaohuangji50w_nofenci.conv'
 ptt_corpus_loc = 'data/Gossiping-QA-Dataset.txt'
-wordmap_loc = 'data/WORDMAP.json'
-samples_loc = 'data/samples.json'
+
+# Detect --corpus parameter dynamically
+corpus = 'xhj'
+for idx, arg in enumerate(sys.argv):
+    if arg in ('--corpus', '-c') and idx + 1 < len(sys.argv):
+        corpus = sys.argv[idx + 1]
+        break
+
+if corpus == 'ptt':
+    wordmap_loc = 'data/WORDMAP_ptt.json'
+    samples_loc = 'data/samples_ptt.json'
+else:
+    wordmap_loc = 'data/WORDMAP.json'
+    samples_loc = 'data/samples.json'
+
 
 # Configure training/optimization
 clip = 50.0
@@ -41,9 +56,6 @@ batch_size = 64
 # Set checkpoint to load from; set to None if starting from scratch
 loadFilename = None
 checkpoint_iter = 4000
-
-num_samples = 298154
-num_training_samples = 290000
 
 # Default word tokens
 PAD_token = 0  # Used for padding short sentences

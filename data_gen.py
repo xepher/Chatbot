@@ -63,10 +63,13 @@ class ChatbotDataset(Dataset):
         print('loading {} samples'.format(split))
         self.samples = json.load(open(samples_loc, 'r'))
 
+        total_samples = len(self.samples)
+        num_train = int(total_samples * 0.95)
+
         if split == 'train':
-            self.samples = self.samples[:num_training_samples]
+            self.samples = self.samples[:num_train]
         else:
-            self.samples = self.samples[num_training_samples:]
+            self.samples = self.samples[num_train:]
 
     def __getitem__(self, idx):
         i = idx * batch_size

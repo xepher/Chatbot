@@ -32,15 +32,23 @@ $ uv run pytest
 ```
 
 ### 数据预处理
-提取训练数据：
+提取训练数据。可以通过 `--corpus`（或 `-c`）指定语料，可选值为 `xhj` (小黄鸡) 和 `ptt` (PTT中文语料)，默认为 `xhj`：
 ```bash
-$ uv run extract.py
+# 处理小黄鸡语料（默认）
 $ uv run pre_process.py
+
+# 处理 PTT 语料
+$ uv run pre_process.py --corpus ptt
 ```
 
 ### 训练
+开始训练模型。同样可以使用 `--corpus` 或 `-c` 参数指定语料，默认为 `xhj`：
 ```bash
+# 训练小黄鸡语料（默认）
 $ uv run train.py
+
+# 训练 PTT 语料
+$ uv run train.py --corpus ptt
 ```
 
 ### 可视化训练过程
@@ -50,9 +58,13 @@ $ tensorboard --logdir path_to_current_dir/logs
 ```
 
 ### 演示
-
+运行演示程序。同样支持 `--corpus` 传入（如果项目包含 demo.py）：
 ```bash
+# 运行小黄鸡（默认）
 $ uv run demo.py
+
+# 运行 PTT
+$ uv run demo.py --corpus ptt
 ```
 
 不正经的语料只能训练不正经的聊天机器人 ╮（﹀_﹀）╭

@@ -238,4 +238,8 @@ def main():
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--corpus', '-c', type=str, default='xhj', choices=['xhj', 'ptt'], help='Choose corpus: xhj or ptt')
+    args = parser.parse_args()
     main()
