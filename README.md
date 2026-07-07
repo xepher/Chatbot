@@ -3,11 +3,20 @@
 聊天机器人的 PyTorch 实现。
 
 
-## 依赖
-+- Python 3.7
-+- PyTorch 1.0
-+- [jieba 0.39](https://github.com/fxsjy/jieba)
-+- [tqdm 4.31.1](https://github.com/tqdm/tqdm)
+## 依赖与环境管理
+
+本项目使用 [uv](https://github.com/astral-sh/uv) 进行 Python 依赖与环境管理。
+
+主要依赖版本：
+- Python >= 3.11
+- PyTorch >= 2.12
+- [jieba 0.42.1](https://github.com/fxsjy/jieba)
+- [tqdm 4.68.4](https://github.com/tqdm/tqdm)
+
+安装项目依赖及初始化虚拟环境：
+```bash
+$ uv sync
+```
 
 ## 数据集
 
@@ -16,18 +25,25 @@
 
 ## 用法
 
+### 运行测试
+执行单元测试以验证代码和环境正常：
+```bash
+$ uv run pytest
+```
+
 ### 数据预处理
 提取训练数据：
 ```bash
-$ python extract.py
-$ python pre_process.py
+$ uv run extract.py
+$ uv run pre_process.py
 ```
 
 ### 训练
 ```bash
-$ python train.py
+$ uv run train.py
 ```
 
+### 可视化训练过程
 可视化训练过程，执行：
 ```bash
 $ tensorboard --logdir path_to_current_dir/logs
@@ -36,7 +52,7 @@ $ tensorboard --logdir path_to_current_dir/logs
 ### 演示
 
 ```bash
-$ python demo.py
+$ uv run demo.py
 ```
 
 不正经的语料只能训练不正经的聊天机器人 ╮（﹀_﹀）╭
