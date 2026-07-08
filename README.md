@@ -71,9 +71,13 @@ $ tensorboard --logdir path_to_current_dir/logs
 ```
 
 ### 人机交互对话
-运行以下命令即可启动终端交互，与你训练好的模型进行实时聊天：
+运行以下命令即可启动终端交互，默认自动选择**最新保存的 Checkpoint**（若有中断的备份包则优先加载备份包）进行实时聊天：
 ```bash
+# 默认方式（自动定位最新 Checkpoint）
 $ uv run chat.py
+
+# 手动指定加载特定的 Checkpoint（支持路径或 models/ 目录下的文件名）
+$ uv run chat.py --checkpoint checkpoint_5_4.731982957099277.tar
 ```
 
 不正经的语料只能训练不正经的聊天机器人 ╮（﹀_﹀）╭

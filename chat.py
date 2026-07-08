@@ -3,28 +3,49 @@ import sys
 import torch
 import torch.nn as nn
 import jieba
+import argparse
 
 from config import *
 from models import EncoderRNN, LuongAttnDecoderRNN
 from utils import GreedySearchDecoder, indexesFromSentence, find_checkpoint
 
 def main():
-    # 1. 自动定位 Checkpoint 权重文件
-    # 优先检测是否有最新的中断备份，其次检测最优权重，最后检测最新正常保存的权重
+    # 使用 argparse 来解析命令行参数，支持自定义选择 Checkpoint
+    parser = argparse.ArgumentParser(description='交互式对话客户端')
+    parser.add_argument('--checkpoint', '-cp', type=str, default=None,
+                        help='指定加载的 Checkpoint 权重文件名或路径。若不指定，则按默认规则自动选择。')
+    args = parser.parse_args()
+
+    # 1. 定位 Checkpoint 权重文件
     resolved_path = None
-    interrupted_path = os.path.join(save_dir, 'checkpoint_interrupted.tar')
     
-    if os.path.exists(interrupted_path):
-        resolved_path = interrupted_path
-        print('正在加载最新的中断备份 Checkpoint: {}'.format(resolved_path))
+    if args.checkpoint:
+        if os.path.exists(args.checkpoint):
+            resolved_path = args.checkpoint
+            print('已手动指定并加载 Checkpoint: {}'.format(resolved_path))
+        else:
+            # 尝试在 save_dir 目录下寻找指定文件
+            possible_path = os.path.join(save_dir, args.checkpoint)
+            if os.path.exists(possible_path):
+                resolved_path = possible_path
+                print('在保存目录下找到并加载 Checkpoint: {}'.format(resolved_path))
+            else:
+                print('错误：指定的 Checkpoint 权重文件不存在：{}'.format(args.checkpoint))
+                sys.exit(1)
     else:
-        resolved_path = find_checkpoint(save_dir, mode='best')
-        if resolved_path:
-            print('自动定位到当前最优 Checkpoint: {}'.format(resolved_path))
+        # 默认自动选择逻辑：优先中断备份，其次最新保存模型，最后最优模型
+        interrupted_path = os.path.join(save_dir, 'checkpoint_interrupted.tar')
+        if os.path.exists(interrupted_path):
+            resolved_path = interrupted_path
+            print('正在自动加载上次中断的备份 Checkpoint: {}'.format(resolved_path))
         else:
             resolved_path = find_checkpoint(save_dir, mode='latest')
             if resolved_path:
-                print('自动定位到最新 Checkpoint: {}'.format(resolved_path))
+                print('已自动选择最新保存的 Checkpoint: {}'.format(resolved_path))
+            else:
+                resolved_path = find_checkpoint(save_dir, mode='best')
+                if resolved_path:
+                    print('已自动选择当前最优的 Checkpoint: {}'.format(resolved_path))
 
     if not resolved_path or not os.path.exists(resolved_path):
         print('未能在 {} 目录下找到任何有效的 Checkpoint 权重文件，请先运行 train.py 训练模型。'.format(save_dir))
