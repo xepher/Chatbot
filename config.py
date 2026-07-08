@@ -45,7 +45,7 @@ else:
 # 4. 训练与优化器超参数配置
 # ==========================================
 clip = 50.0                  # 梯度裁剪阀值。防止 RNN 训练过程中梯度爆炸（Gradient Explosion）。
-teacher_forcing_ratio = 1.0  # 教师迫导比例。1.0 表示在训练的每一步，Decoder 都直接使用真实词作为下一步的输入。
+teacher_forcing_ratio = 0.5  # 教师迫导比例。1.0 表示在训练的每一步，Decoder 都直接使用真实词作为下一步的输入。
 learning_rate = 0.0002       # 学习率。控制参数更新的步伐大小。
 decoder_learning_ratio = 5.0 # 解码器的学习率倍数。Luong 论文中提到解码器可以以稍大一些的学习率运行。
 n_iteration = 4000           # 训练迭代的总批次数（如果是按 iteration 算）。
