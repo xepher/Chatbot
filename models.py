@@ -38,6 +38,9 @@ class EncoderRNN(nn.Module):
         
         # 2. 序列打包压缩：因为输入序列中有填充的 0 (PAD)，使用 pack_padded_sequence 告诉 GRU 忽略这些填充 0 的计算。
         # 这能大幅度节省计算力，并杜绝填充 0 的数据干扰模型隐藏状态的更新。
+        # pack_padded_sequence 要求 lengths 参数必须位于 CPU 上
+        if isinstance(input_lengths, torch.Tensor):
+            input_lengths = input_lengths.cpu()
         packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
         
         # 3. 运行双向 GRU。

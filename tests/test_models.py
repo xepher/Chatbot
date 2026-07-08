@@ -42,3 +42,31 @@ def test_encoder_decoder_forward():
     assert decoder_output.shape == (batch_size, vocab_size)
     # Decoder hidden shape: (n_layers, batch_size, hidden_size)
     assert decoder_hidden.shape == (2, batch_size, hidden_size)
+
+
+def test_encoder_forward_cuda_lengths():
+    if not torch.cuda.is_available():
+        return
+    vocab_size = 100
+    hidden_size = 32
+    batch_size = 4
+    seq_len = 5
+
+    embedding = nn.Embedding(vocab_size, hidden_size)
+    encoder = EncoderRNN(hidden_size, embedding, n_layers=2, dropout=0.1)
+
+    # Move model to CUDA
+    device = torch.device("cuda")
+    encoder = encoder.to(device)
+
+    # Create dummy input data on CUDA
+    input_seq = torch.randint(0, vocab_size, (seq_len, batch_size), dtype=torch.long).to(device)
+    input_lengths = torch.tensor([5, 4, 3, 2], dtype=torch.long).to(device)
+
+    # Forward encoder
+    encoder_outputs, encoder_hidden = encoder(input_seq, input_lengths)
+
+    # Check device and shape
+    assert encoder_outputs.is_cuda
+    assert encoder_outputs.shape == (seq_len, batch_size, hidden_size)
+

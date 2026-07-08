@@ -149,7 +149,7 @@ class ChatbotDataset(Dataset):
         self.split = split
         assert self.split in {'train', 'valid'}
 
-        print('正在从本地加载样本: {} ...'.format(samples_loc))
+        print('正在从本地加载 {} 样本: {} ...'.format(self.split, samples_loc))
         self.samples = json.load(open(samples_loc, 'r'))
 
         # 动态切分：将数据集以 95% 作为训练集，余下的 5% 作为评估/验证集
