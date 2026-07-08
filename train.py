@@ -314,7 +314,13 @@ def main():
         if resolved_path and os.path.exists(resolved_path):
             print('正在从本地加载 Checkpoint: {} ...'.format(resolved_path))
             checkpoint = torch.load(resolved_path, map_location=device)
-            epoch_start = checkpoint['epoch'] + 1
+            if is_interrupted_cp:
+                # 如果是中断恢复包，说明当前 Epoch 还没有跑完就被中断了。
+                # 重新启动时，应该从当前 Epoch 继续重新跑，而不是直接跳过该 Epoch 到下一轮。
+                epoch_start = checkpoint['epoch']
+            else:
+                # 如果是正常的、已经完整跑完的 Epoch 存档，则从下一个 Epoch 开始训练。
+                epoch_start = checkpoint['epoch'] + 1
             encoder.load_state_dict(checkpoint['en'])
             decoder.load_state_dict(checkpoint['de'])
             encoder_optimizer.load_state_dict(checkpoint['en_opt'])

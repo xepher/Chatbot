@@ -210,6 +210,9 @@ def test_auto_load_interrupted_checkpoint(monkeypatch, tmp_path):
     assert called == [False]
     # And since we raised KeyboardInterrupt, a new checkpoint_interrupted.tar should be saved
     assert os.path.exists(checkpoint_path)
+    checkpoint_new = torch.load(checkpoint_path, map_location="cpu")
+    # Verify that the resumed training starts from epoch 3 (not 4)
+    assert checkpoint_new['epoch'] == 3
 
 
 def test_train_cpu_only(monkeypatch, tmp_path):
