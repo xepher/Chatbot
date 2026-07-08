@@ -152,7 +152,12 @@ class ChatbotDataset(Dataset):
         print('正在从本地加载 {} 样本: {} ...'.format(self.split, samples_loc))
         self.samples = json.load(open(samples_loc, 'r'))
 
-        # 动态切分：将数据集以 95% 作为训练集，余下的 5% 作为评估/验证集
+        # 动态切分：为了消除话题分布偏差（避免训练集和验证集话题完全不同导致过拟合），
+        # 必须在切分前对整个样本列表进行打乱。我们使用固定随机种子 (42) 以确保切分结果的可重复性。
+        import random
+        random.seed(42)
+        random.shuffle(self.samples)
+
         total_samples = len(self.samples)
         num_train = int(total_samples * 0.95)
 

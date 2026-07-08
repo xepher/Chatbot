@@ -14,6 +14,7 @@ graph TD
     Project --> Opt["优化算法 & 梯度裁剪"]
     Project --> Loss["损失函数与评估解码"]
     Project --> Speedup["并行加载与混合精度加速"]
+    Project --> Reg["泛化与去过拟合优化"]
 
     Data --> AIMA_24["AIMA 第 24 章: NLP 深度学习"]
     Data --> DL_12["花书 第 12 章: NLP 应用"]
@@ -31,6 +32,9 @@ graph TD
 
     Speedup --> DL_12_1["花书 第 12 章: 计算机实现与硬件加速 (DataLoader & pin_memory)"]
     Speedup --> DL_8_AMP["花书 第 8 章: 混合精度数值稳定性 (GradScaler)"]
+
+    Reg --> DL_5_Reg["花书 第 5 章: 机器学习基础 (打乱切分与泛化误差)"]
+    Reg --> DL_10_SS["花书 第 10 章: 序列自回归与暴露偏差 (计划采样)"]
 ```
 
 ---
@@ -74,9 +78,17 @@ graph TD
   * **第 5.5 节 (Maximum Likelihood Estimation)**：彻底搞清楚为什么分类任务和序列概率建模要最大化对数似然，以及它与最小化交叉熵损失在数学上的等价性。
 
 ### 6. 并行数据加载与训练加速优化 (Parallel Data Loading & Training Speedup)
-* **项目概念**：[DataLoader](file:///D:/Repos/Chatbot/train.py#L215-L230) 异步加载、`autocast`/`GradScaler` 自动混合精度 (AMP) 训练、`torch.compile` 图编译与算子融合。
+* **项目概念**：[DataLoader](file:///D:/Repos/Chatbot/train.py#L252-L267) 异步加载、`autocast`/`GradScaler` 自动混合精度 (AMP) 训练、`torch.compile` 图编译与算子融合。
 * **《人工智能：现代方法》对应章节**：
   * **第 21.2 节 (Computational Graph & Hardware)**：理解计算图的构建机制以及硬件加速计算（Tensor Cores，混合精度计算基础）的物理基础。
 * **《深度学习》（花书）对应章节**：
   * **第 12.1 节 (Computer Implementations)**：系统学习深度学习模型在计算机硬件中的运行方式，理解 CPU 与 GPU 之间数据传输的通道和延迟机制，从而搞清楚为什么需要多进程预加载（DataLoader）与锁页内存（pin_memory）。
   * **第 8.1.1 节 (Optimization Challenges - Numerical Precision)**：探讨在梯度计算中使用不同数值精度可能带来的下溢与上溢挑战，理解 `GradScaler` 对半精度计算梯度的缩放恢复原理。
+
+### 7. 泛化性、偏差与去过拟合优化 (Generalization, Bias & Overfitting Prevention)
+* **项目概念**：[ChatbotDataset](file:///D:/Repos/Chatbot/data_gen.py#L152-L162) 全局随机打乱（Seed-Shuffle）、[Scheduled Sampling](file:///D:/Repos/Chatbot/train.py#L371-L377)（计划采样 / 教师迫导渐进式衰减）。
+* **《人工智能：现代方法》对应章节**：
+  * **第 19.4 节 (Generalization and Overfitting)**：学习过拟合的概念、测试集/训练集分布一致性的重要性。
+* **《深度学习》（花书）对应章节**：
+  * **第 5.2 节 (Capacity, Overfitting and Underfitting)**：系统性学习泛化误差、训练误差的概念。理解如果数据不打乱切分，可能导致严重的采样偏差（Selection Bias），从而使验证集和训练集不满足独立同分布（I.I.D.）假设，极易引发假性过拟合或评估失准。
+  * **第 10.2.1 节 (Teacher Forcing and Networks with Output Feedback)**：重点研读 Teacher Forcing 导致训练和推理时输入分布不一致的问题（即**暴露偏差 Exposure Bias**），理解为什么需要引入 **计划采样（Scheduled Sampling / Curriculum Learning）** 这一过渡机制来平滑模型在测试阶段的表现。

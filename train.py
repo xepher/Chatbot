@@ -371,6 +371,13 @@ def main():
     epoch = epoch_start
     try:
         for epoch in range(epoch_start, epochs):
+            # 计划采样 (Scheduled Sampling)：
+            # 随着训练进行，模型逐渐变聪明，应当减少导师指导的比例。
+            # 前 30 个 Epoch，导师迫导比例从 0.8 线性衰减至 0.1；30 个 Epoch 之后固定为 0.1，促使模型完全独立学习并消除暴露偏差。
+            global teacher_forcing_ratio
+            teacher_forcing_ratio = max(0.1, 0.8 - epoch * (0.7 / 30.0))
+            print('\n--- Epoch {} 开始，当前教师迫导比例 (Teacher Forcing Ratio): {:.3f} ---'.format(epoch, teacher_forcing_ratio))
+
             # 将模型调整为训练状态（激活 Dropout 等随机层）
             encoder.train()
             decoder.train()
