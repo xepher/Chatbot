@@ -255,7 +255,8 @@ def main():
         shuffle=True, 
         num_workers=workers, 
         collate_fn=batch2TrainData, 
-        pin_memory=True
+        pin_memory=True,
+        persistent_workers=(workers > 0)
     )
     val_loader = DataLoader(
         ChatbotDataset('valid'), 
@@ -263,7 +264,8 @@ def main():
         shuffle=False, 
         num_workers=workers, 
         collate_fn=batch2TrainData, 
-        pin_memory=True
+        pin_memory=True,
+        persistent_workers=(workers > 0)
     )
 
     # ----------------------------------------------------
@@ -374,10 +376,9 @@ def main():
             encoder.train()
             decoder.train()
 
-            start = time.time()
-
             # 遍历训练集 Batch 列表 (使用高效迭代的 DataLoader)
             for i, batch in enumerate(train_loader):
+                start = time.time()  # 获取数据后才开始计时，以剥离 DataLoader 后台读取/重置等额外开销
                 input_variable, lengths, target_variable, mask, max_target_len = batch
                 
                 # 执行单步批训练，获得当前损失值
@@ -387,8 +388,6 @@ def main():
                 # 记录指标
                 losses.update(loss, max_target_len)
                 batch_time.update(time.time() - start)
-
-                start = time.time()
 
                 # 按配置规律打印训练日志
                 if i % print_every == 0:
