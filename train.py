@@ -5,7 +5,6 @@ import time
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
-from torch.cuda.amp import autocast, GradScaler
 from data_gen import ChatbotDataset, batch2TrainData
 from models import EncoderRNN, LuongAttnDecoderRNN
 from utils import *
@@ -58,7 +57,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, encode
     # ----------------------------------------------------
     # 在 with autocast(): 作用域下，PyTorch 会自动将矩阵乘法、线性层等运算的精度从 32位浮点 (FP32)
     # 降低到 16位浮点 (FP16)。这在 GPU 上能显著释放 Tensor Cores 的硬件加速能力，极大提速并腰斩显存开销。
-    with autocast(enabled=torch.cuda.is_available()):
+    with torch.amp.autocast(device_type='cuda', enabled=torch.cuda.is_available()):
         
         # ----------------------------------------------------
         # 步骤 4. 前向传播：编码问句 (Encoder Forward)
@@ -189,7 +188,7 @@ def validate(val_loader, encoder, decoder):
             loss = 0
 
             # 验证集推理同样启用 autocast 进行加速
-            with autocast(enabled=torch.cuda.is_available()):
+            with torch.amp.autocast(device_type='cuda', enabled=torch.cuda.is_available()):
                 encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
                 
                 decoder_input = torch.LongTensor([[SOS_token for _ in range(input_variable.size(1))]])
@@ -352,7 +351,7 @@ def main():
     # 7. 初始化自动混合精度 (AMP) 梯度缩放器 (GradScaler)
     # ----------------------------------------------------
     # 只有当 GPU 可用时，才实例化 Scaler。若处于 CPU 模式下，设为 None 自动回退传统 FP32 运算。
-    scaler = GradScaler() if torch.cuda.is_available() else None
+    scaler = torch.amp.GradScaler('cuda') if torch.cuda.is_available() else None
 
     # 初始化计时和计量指标记录工具
     print('数据初始化就绪...')
