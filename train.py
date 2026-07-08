@@ -260,7 +260,7 @@ def main():
         elif resolved_path:
             print('警告: 指定的 Checkpoint 文件未找到，将从头开始训练: {}'.format(resolved_path))
 
-    # 5.1 使用 torch.compile 对模型结构进行编译优化 (PyTorch >= 2.0 且在 GPU 下生效)
+    # 6. 使用 torch.compile 对模型结构进行编译优化 (PyTorch >= 2.0 且在 GPU 下生效)
     # 由于 Windows 平台尚未原生支持 Triton，为了避免 TritonMissing 报错，在 Windows 系统下默认跳过编译
     if hasattr(torch, 'compile') and torch.cuda.is_available() and not sys.platform.startswith('win'):
         try:
@@ -270,7 +270,7 @@ def main():
         except Exception as e:
             print('编译优化失败，回退到原始模型模式：{}'.format(e))
 
-    # 5.2 初始化自动混合精度 (AMP) 梯度缩放器
+    # 7. 初始化自动混合精度 (AMP) 梯度缩放器
     scaler = GradScaler() if torch.cuda.is_available() else None
 
     # 初始化计时和计量指标记录工具
@@ -278,7 +278,7 @@ def main():
     batch_time = AverageMeter()  
     losses = AverageMeter()  
 
-    # 6. 开启 Epoch 大循环
+    # 8. 开启 Epoch 大循环
     epoch = epoch_start
     try:
         for epoch in range(epoch_start, epochs):
