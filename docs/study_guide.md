@@ -13,6 +13,7 @@ graph TD
     Project --> Attention["Attention 机制"]
     Project --> Opt["优化算法 & 梯度裁剪"]
     Project --> Loss["损失函数与评估解码"]
+    Project --> Speedup["并行加载与混合精度加速"]
 
     Data --> AIMA_24["AIMA 第 24 章: NLP 深度学习"]
     Data --> DL_12["花书 第 12 章: NLP 应用"]
@@ -27,6 +28,9 @@ graph TD
 
     Loss --> DL_3["花书 第 3 章: 概率与信息论 (交叉熵)"]
     Loss --> DL_5["花书 第 5 章: 机器学习基础 (最大似然估计)"]
+
+    Speedup --> DL_12_1["花书 第 12 章: 计算机实现与硬件加速 (DataLoader & pin_memory)"]
+    Speedup --> DL_8_AMP["花书 第 8 章: 混合精度数值稳定性 (GradScaler)"]
 ```
 
 ---
@@ -37,7 +41,7 @@ graph TD
 * **项目概念**：[nn.Embedding](file:///D:/Repos/Chatbot/train.py#L220)（将词 ID 转换为向量空间稠密表征）、`<pad>` 对齐填充、掩码 Mask 机制。
 * **《人工智能：现代方法》对应章节**：
   * **第 24.1 节 (Grammar and Language Models)**：理解词表（Vocabulary）与语言模型的基本定义。
-  * **第 24.2 节 (Word Embeddings)**：重点理解从 One-Hot 稀疏编码到 Word2Vec 等分布式表示 of 物理演进与数学动机。
+  * **第 24.2 节 (Word Embeddings)**：重点理解从 One-Hot 稀疏编码到 Word2Vec 等分布式表示的物理演进与数学动机。
 * **《深度学习》（花书）对应章节**：
   * **第 12.4 节 (Natural Language Processing)**：理解神经网络语言模型的原理，词向量是如何通过参数矩阵隐式学习并优化的。
 
@@ -68,3 +72,11 @@ graph TD
 * **《深度学习》（花书）对应章节**：
   * **第 3.13 节 (Information Theory)**：从信息论角度理解熵（Entropy）与交叉熵（Cross-Entropy）的物理本质。
   * **第 5.5 节 (Maximum Likelihood Estimation)**：彻底搞清楚为什么分类任务和序列概率建模要最大化对数似然，以及它与最小化交叉熵损失在数学上的等价性。
+
+### 6. 并行数据加载与训练加速优化 (Parallel Data Loading & Training Speedup)
+* **项目概念**：[DataLoader](file:///D:/Repos/Chatbot/train.py#L215-L230) 异步加载、`autocast`/`GradScaler` 自动混合精度 (AMP) 训练、`torch.compile` 图编译与算子融合。
+* **《人工智能：现代方法》对应章节**：
+  * **第 21.2 节 (Computational Graph & Hardware)**：理解计算图的构建机制以及硬件加速计算（Tensor Cores，混合精度计算基础）的物理基础。
+* **《深度学习》（花书）对应章节**：
+  * **第 12.1 节 (Computer Implementations)**：系统学习深度学习模型在计算机硬件中的运行方式，理解 CPU 与 GPU 之间数据传输的通道和延迟机制，从而搞清楚为什么需要多进程预加载（DataLoader）与锁页内存（pin_memory）。
+  * **第 8.1.1 节 (Optimization Challenges - Numerical Precision)**：探讨在梯度计算中使用不同数值精度可能带来的下溢与上溢挑战，理解 `GradScaler` 对半精度计算梯度的缩放恢复原理。
