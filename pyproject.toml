@@ -1,0 +1,29 @@
+[project]
+name = "chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "jieba>=0.42.1",
+    "numpy",
+    "pytest>=9.1.1",
+    "torch>=2.12.1",
+    "tqdm>=4.68.4",
+    "zhconv>=1.4.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::UserWarning:jieba._compat",
+]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+
