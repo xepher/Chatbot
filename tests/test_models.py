@@ -70,3 +70,44 @@ def test_encoder_forward_cuda_lengths():
     assert encoder_outputs.is_cuda
     assert encoder_outputs.shape == (seq_len, batch_size, hidden_size)
 
+
+def test_save_load_checkpoint(tmp_path):
+    import os
+    from torch import optim
+
+    vocab_size = 10
+    hidden_size = 8
+    embedding = nn.Embedding(vocab_size, hidden_size)
+
+    encoder = EncoderRNN(hidden_size, embedding, n_layers=1, dropout=0.1)
+    decoder = LuongAttnDecoderRNN('dot', embedding, hidden_size, vocab_size, n_layers=1, dropout=0.1)
+
+    encoder_optimizer = optim.Adam(encoder.parameters(), lr=0.001)
+    decoder_optimizer = optim.Adam(decoder.parameters(), lr=0.001)
+
+    # Save checkpoint
+    checkpoint_path = os.path.join(tmp_path, "checkpoint.tar")
+    torch.save({
+        'epoch': 5,
+        'en': encoder.state_dict(),
+        'de': decoder.state_dict(),
+        'en_opt': encoder_optimizer.state_dict(),
+        'de_opt': decoder_optimizer.state_dict(),
+        'loss': 0.5,
+    }, checkpoint_path)
+
+    assert os.path.exists(checkpoint_path)
+
+    # Load checkpoint
+    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    assert checkpoint['epoch'] == 5
+    assert checkpoint['loss'] == 0.5
+
+    # Check state loading
+    encoder_new = EncoderRNN(hidden_size, embedding, n_layers=1, dropout=0.1)
+    encoder_new.load_state_dict(checkpoint['en'])
+    # Assert values match
+    for p1, p2 in zip(encoder.parameters(), encoder_new.parameters()):
+        assert torch.allclose(p1, p2)
+
+

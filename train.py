@@ -232,13 +232,30 @@ def main():
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.Adam(decoder.parameters(), lr=learning_rate * decoder_learning_ratio)
 
+    # 加载 Checkpoint 以便断点续训
+    epoch_start = start_epoch
+    if loadFilename:
+        if os.path.exists(loadFilename):
+            print('正在从本地加载 Checkpoint: {} ...'.format(loadFilename))
+            checkpoint = torch.load(loadFilename, map_location=device)
+            epoch_start = checkpoint['epoch'] + 1
+            encoder.load_state_dict(checkpoint['en'])
+            decoder.load_state_dict(checkpoint['de'])
+            encoder_optimizer.load_state_dict(checkpoint['en_opt'])
+            decoder_optimizer.load_state_dict(checkpoint['de_opt'])
+            if 'voc' in checkpoint:
+                voc.__dict__.update(checkpoint['voc'])
+            print('Checkpoint 加载成功，将从 Epoch {} 继续训练。'.format(epoch_start))
+        else:
+            print('警告: 指定的 Checkpoint 文件未找到，将从头开始训练: {}'.format(loadFilename))
+
     # 初始化计时和计量指标记录工具
     print('数据初始化就绪...')
     batch_time = AverageMeter()  
     losses = AverageMeter()  
 
     # 5. 开启 Epoch 大循环
-    for epoch in range(start_epoch, epochs):
+    for epoch in range(epoch_start, epochs):
         # 激活训练状态（允许激活 Dropout 等非确定层动作）
         encoder.train()
         decoder.train()
