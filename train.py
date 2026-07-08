@@ -382,6 +382,9 @@ def main():
             encoder.train()
             decoder.train()
 
+            # 预计算批次总数的字符宽度，用于日志对齐（例如 554 为 3 位，确保 0/554 与 100/554 列对齐）
+            batch_width = len(str(len(train_loader)))
+
             # 遍历训练集 Batch 列表 (使用高效迭代的 DataLoader)
             for i, batch in enumerate(train_loader):
                 start = time.time()  # 获取数据后才开始计时，以剥离 DataLoader 后台读取/重置等额外开销
@@ -395,13 +398,15 @@ def main():
                 losses.update(loss, max_target_len)
                 batch_time.update(time.time() - start)
 
-                # 按配置规律打印训练日志
+                # 按配置规律打印训练日志（使用右对齐填充确保批次索引列宽一致）
                 if i % print_every == 0:
-                    print('[{0}] Epoch: [{1}][{2}/{3}]\t'
+                    print('[{0}] Epoch: [{1}][{2:>{width}}/{3}]\t'
                           '批处理耗时 {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                          '交叉熵 Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(timestamp(), epoch, i, len(train_loader),
-                                                                           batch_time=batch_time,
-                                                                           loss=losses))
+                          '交叉熵 Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                              timestamp(), epoch, i, len(train_loader),
+                              width=batch_width,
+                              batch_time=batch_time,
+                              loss=losses))
             
             # 每个 Epoch 结束后，在验证集上计算一次真实评估损失
             val_loss = validate(val_loader, encoder, decoder)
