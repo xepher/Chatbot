@@ -236,7 +236,15 @@ def main():
     epoch_start = start_epoch
     if loadFilename:
         resolved_path = loadFilename
-        if loadFilename in ('best', 'latest'):
+        is_interrupted_cp = False
+
+        # 如果是自动检测模式（'best' 或 'latest'），优先检测是否存在 'checkpoint_interrupted.tar'
+        interrupted_path = os.path.join(save_dir, 'checkpoint_interrupted.tar')
+        if loadFilename in ('best', 'latest') and os.path.exists(interrupted_path):
+            resolved_path = interrupted_path
+            is_interrupted_cp = True
+            print('检测到上次意外中断的恢复包，将优先进行自动恢复：{}'.format(resolved_path))
+        elif loadFilename in ('best', 'latest'):
             resolved_path = find_checkpoint(save_dir, mode=loadFilename)
             if resolved_path:
                 print('自动检测到 {} Checkpoint: {}'.format(loadFilename, resolved_path))
@@ -254,6 +262,14 @@ def main():
             if 'voc' in checkpoint:
                 voc.__dict__.update(checkpoint['voc'])
             print('Checkpoint 加载成功，将从 Epoch {} 继续训练。'.format(epoch_start))
+
+            # 成功加载中断恢复包后将其删除，避免后续全新训练时被重复加载
+            if is_interrupted_cp:
+                try:
+                    os.remove(resolved_path)
+                    print('已成功清理临时中断恢复包。')
+                except OSError as e:
+                    print('清理临时中断恢复包失败: {}'.format(e))
         elif resolved_path:
             print('警告: 指定的 Checkpoint 文件未找到，将从头开始训练: {}'.format(resolved_path))
 
@@ -324,7 +340,7 @@ def main():
                     'voc': voc.__dict__
                 }, os.path.join(directory, '{}_{}_{}.tar'.format('checkpoint', epoch, val_loss)))
     except KeyboardInterrupt:
-        print('\n[检测到键盘中断 (Ctrl+C)] 正在优雅退出...')
+        print('\n[检测到键盘中断 (Ctrl+C)] 正在退出...')
         directory = save_dir
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -338,7 +354,7 @@ def main():
             'loss': losses.avg,
             'voc': voc.__dict__
         }, checkpoint_path)
-        print('当前训练进度已优雅保存至: {}'.format(checkpoint_path))
+        print('当前训练进度已保存至: {}'.format(checkpoint_path))
 
 
 if __name__ == '__main__':

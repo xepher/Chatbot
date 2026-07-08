@@ -152,4 +152,69 @@ def test_train_keyboard_interrupt(monkeypatch, tmp_path):
     assert os.path.exists(expected_path)
 
 
+def test_auto_load_interrupted_checkpoint(monkeypatch, tmp_path):
+    import train
+    import data_gen
+    import os
+    from torch import optim
+    from torch import nn
+    from models import EncoderRNN, LuongAttnDecoderRNN
+
+    # 1. Mock dataset
+    class DummyDataset:
+        def __init__(self, split): pass
+        def __len__(self): return 1
+        def __getitem__(self, index):
+            import torch
+            return (torch.zeros(5, 4, dtype=torch.long), torch.tensor([5, 4, 3, 2]), 
+                    torch.zeros(5, 4, dtype=torch.long), torch.zeros(5, 4), 5)
+    monkeypatch.setattr(data_gen, "ChatbotDataset", DummyDataset)
+
+    # 2. Save a dummy interrupted checkpoint
+    checkpoint_dir = os.path.join(tmp_path, "xhj")
+    os.makedirs(checkpoint_dir)
+    checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_interrupted.tar")
+    
+    from config import hidden_size, encoder_n_layers, decoder_n_layers, attn_model, dropout, voc
+    vocab_size = voc.num_words
+
+    # Create weights matching the real model sizes
+    embedding = nn.Embedding(vocab_size, hidden_size)
+    encoder = EncoderRNN(hidden_size, embedding, encoder_n_layers, dropout)
+    decoder = LuongAttnDecoderRNN(attn_model, embedding, hidden_size, vocab_size, decoder_n_layers, dropout)
+    encoder_optimizer = optim.Adam(encoder.parameters(), lr=0.001)
+    decoder_optimizer = optim.Adam(decoder.parameters(), lr=0.001)
+    
+    torch.save({
+        'epoch': 3,
+        'en': encoder.state_dict(),
+        'de': decoder.state_dict(),
+        'en_opt': encoder_optimizer.state_dict(),
+        'de_opt': decoder_optimizer.state_dict(),
+        'loss': 0.5,
+    }, checkpoint_path)
+
+    # 3. Patch configs
+    monkeypatch.setattr(train, "save_dir", checkpoint_dir)
+    monkeypatch.setattr(train, "loadFilename", "best")
+    monkeypatch.setattr(train, "start_epoch", 0)
+    monkeypatch.setattr(train, "epochs", 5)
+
+    # We mock train function to verify that checkpoint_interrupted.tar is deleted
+    called = []
+    def mock_train(*args, **kwargs):
+        called.append(os.path.exists(checkpoint_path))
+        raise KeyboardInterrupt() # interrupt to stop training loop
+
+    monkeypatch.setattr(train, "train", mock_train)
+
+    train.main()
+
+    # The mock_train should have seen that checkpoint_interrupted.tar was deleted (False)
+    assert called == [False]
+    # And since we raised KeyboardInterrupt, a new checkpoint_interrupted.tar should be saved
+    assert os.path.exists(checkpoint_path)
+
+
+
 
