@@ -1,7 +1,7 @@
 # encoding=utf-8
 import pytest
 import torch
-from utils import AverageMeter, unicodeToAscii, normalizeString, maskNLLLoss
+from utils import AverageMeter, unicodeToAscii, normalizeString, maskNLLLoss, find_checkpoint
 
 def test_average_meter():
     meter = AverageMeter()
@@ -38,4 +38,32 @@ def test_mask_nll_loss():
     loss, nTotal = maskNLLLoss(inp, target, mask)
     assert nTotal == 1
     assert isinstance(loss, torch.Tensor)
+
+
+def test_find_checkpoint(tmp_path):
+    import os
+
+    # Test directory doesn't exist
+    assert find_checkpoint(os.path.join(tmp_path, "nonexistent")) is None
+
+    # Test empty directory
+    os.makedirs(os.path.join(tmp_path, "empty"))
+    assert find_checkpoint(os.path.join(tmp_path, "empty")) is None
+
+    # Create dummy checkpoints
+    dir_path = os.path.join(tmp_path, "checkpoints")
+    os.makedirs(dir_path)
+
+    open(os.path.join(dir_path, "checkpoint_1_4.500.tar"), 'w').close()
+    open(os.path.join(dir_path, "checkpoint_2_3.200.tar"), 'w').close()
+    open(os.path.join(dir_path, "checkpoint_3_3.800.tar"), 'w').close()
+
+    # Best (lowest val_loss) should be checkpoint_2_3.200.tar
+    best_cp = find_checkpoint(dir_path, mode='best')
+    assert os.path.basename(best_cp) == "checkpoint_2_3.200.tar"
+
+    # Latest (highest epoch) should be checkpoint_3_3.800.tar
+    latest_cp = find_checkpoint(dir_path, mode='latest')
+    assert os.path.basename(latest_cp) == "checkpoint_3_3.800.tar"
+
 

@@ -125,3 +125,40 @@ def pick_n_valid_sentences(n):
 
 def timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def find_checkpoint(directory, mode='latest'):
+    """
+    在指定目录下寻找 Checkpoint 文件。
+    mode 可选值:
+    - 'latest': 寻找 Epoch 最大的 Checkpoint
+    - 'best': 寻找 val_loss 最小的 Checkpoint
+    """
+    if not os.path.exists(directory):
+        return None
+
+    files = [f for f in os.listdir(directory) if f.startswith('checkpoint_') and f.endswith('.tar')]
+    if not files:
+        return None
+
+    parsed_files = []
+    for f in files:
+        name_parts = f[11:-4].split('_')
+        if len(name_parts) == 2:
+            try:
+                epoch = int(name_parts[0])
+                val_loss = float(name_parts[1])
+                parsed_files.append((f, epoch, val_loss))
+            except ValueError:
+                continue
+
+    if not parsed_files:
+        return None
+
+    if mode == 'best':
+        parsed_files.sort(key=lambda x: x[2])
+    else:
+        parsed_files.sort(key=lambda x: x[1], reverse=True)
+
+    return os.path.join(directory, parsed_files[0][0])
+

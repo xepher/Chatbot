@@ -235,9 +235,17 @@ def main():
     # 加载 Checkpoint 以便断点续训
     epoch_start = start_epoch
     if loadFilename:
-        if os.path.exists(loadFilename):
-            print('正在从本地加载 Checkpoint: {} ...'.format(loadFilename))
-            checkpoint = torch.load(loadFilename, map_location=device)
+        resolved_path = loadFilename
+        if loadFilename in ('best', 'latest'):
+            resolved_path = find_checkpoint(save_dir, mode=loadFilename)
+            if resolved_path:
+                print('自动检测到 {} Checkpoint: {}'.format(loadFilename, resolved_path))
+            else:
+                print('未在 {} 目录下找到任何有效的 Checkpoint，将从头开始训练。'.format(save_dir))
+
+        if resolved_path and os.path.exists(resolved_path):
+            print('正在从本地加载 Checkpoint: {} ...'.format(resolved_path))
+            checkpoint = torch.load(resolved_path, map_location=device)
             epoch_start = checkpoint['epoch'] + 1
             encoder.load_state_dict(checkpoint['en'])
             decoder.load_state_dict(checkpoint['de'])
@@ -246,8 +254,8 @@ def main():
             if 'voc' in checkpoint:
                 voc.__dict__.update(checkpoint['voc'])
             print('Checkpoint 加载成功，将从 Epoch {} 继续训练。'.format(epoch_start))
-        else:
-            print('警告: 指定的 Checkpoint 文件未找到，将从头开始训练: {}'.format(loadFilename))
+        elif resolved_path:
+            print('警告: 指定的 Checkpoint 文件未找到，将从头开始训练: {}'.format(resolved_path))
 
     # 初始化计时和计量指标记录工具
     print('数据初始化就绪...')
