@@ -212,5 +212,51 @@ def test_auto_load_interrupted_checkpoint(monkeypatch, tmp_path):
     assert os.path.exists(checkpoint_path)
 
 
+def test_train_cpu_only(monkeypatch, tmp_path):
+    import train
+    import data_gen
+    import config
+    import utils
+    import torch
+
+    # 1. Force CPU device across all modules
+    monkeypatch.setattr(train, "device", torch.device("cpu"))
+    monkeypatch.setattr(config, "device", torch.device("cpu"))
+    monkeypatch.setattr(utils, "device", torch.device("cpu"))
+
+    # 2. Mock dataset
+    class DummyDataset:
+        def __init__(self, split): pass
+        def __len__(self): return 1
+        def __getitem__(self, index):
+            return [1, 2, 3], [4, 5, 6]
+    monkeypatch.setattr(data_gen, "ChatbotDataset", DummyDataset)
+
+    # 3. Patch configs
+    monkeypatch.setattr(train, "workers", 0)
+    monkeypatch.setattr(train, "save_dir", str(tmp_path))
+    monkeypatch.setattr(train, "loadFilename", None)
+    monkeypatch.setattr(train, "start_epoch", 0)
+    monkeypatch.setattr(train, "epochs", 5)
+
+    # We mock train function to verify it was called on CPU
+    called_device = []
+    def mock_train(input_variable, lengths, *args, **kwargs):
+        called_device.append(input_variable.device.type)
+        raise KeyboardInterrupt() # interrupt to stop training loop
+
+    monkeypatch.setattr(train, "train", mock_train)
+
+    train.main()
+
+    # The input_variable should have been on 'cpu'
+    assert called_device == ['cpu']
+    # And checkpoint_interrupted.tar should be saved successfully on CPU
+    import os
+    expected_path = os.path.join(tmp_path, "checkpoint_interrupted.tar")
+    assert os.path.exists(expected_path)
+
+
+
 
 
