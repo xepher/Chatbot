@@ -115,9 +115,8 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, encode
                 # 选择概率最高（最可能）的词汇 ID 索引值作为预测值
                 _, topi = decoder_output.topk(1)
                 
-                # 下一次循环的输入设置为模型当前时间步的预测词汇
-                decoder_input = torch.LongTensor([[topi[i][0] for i in range(input_variable.size(1))]])
-                decoder_input = decoder_input.to(device)
+                # 下一次循环的输入设置为模型当前时间步的预测词汇 (直接在 GPU 上进行维度变换，规避 CPU 循环与数据复制)
+                decoder_input = topi.view(1, -1)
                 
                 # 掩码损失计算
                 mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
@@ -202,8 +201,8 @@ def validate(val_loader, encoder, decoder):
                         decoder_input, decoder_hidden, encoder_outputs
                     )
                     _, topi = decoder_output.topk(1)
-                    decoder_input = torch.LongTensor([[topi[i][0] for i in range(input_variable.size(1))]])
-                    decoder_input = decoder_input.to(device)
+                    # 直接在 GPU 上进行维度变换，规避 CPU 循环与数据复制
+                    decoder_input = topi.view(1, -1)
                     
                     mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
                     loss += mask_loss
