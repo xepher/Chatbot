@@ -67,3 +67,30 @@ def test_find_checkpoint(tmp_path):
     assert os.path.basename(latest_cp) == "checkpoint_3_3.800.tar"
 
 
+def test_native_dataloader():
+    from data_gen import ChatbotDataset, batch2TrainData
+    from torch.utils.data import DataLoader
+
+    # Ensure dataset loads correctly
+    dataset = ChatbotDataset('valid')
+    assert len(dataset) > 0
+
+    # Ensure a single item is returned as a tuple of lists
+    sample = dataset[0]
+    assert isinstance(sample, tuple)
+    assert len(sample) == 2
+    assert isinstance(sample[0], list)
+    assert isinstance(sample[1], list)
+
+    # Test DataLoader with collate_fn=batch2TrainData
+    loader = DataLoader(dataset, batch_size=4, shuffle=False, collate_fn=batch2TrainData)
+    batch = next(iter(loader))
+    
+    inp, lengths, output, mask, max_target_len = batch
+    assert inp.shape[1] == 4
+    assert len(lengths) == 4
+    assert output.shape[1] == 4
+    assert mask.shape[1] == 4
+
+
+

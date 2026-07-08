@@ -163,25 +163,17 @@ class ChatbotDataset(Dataset):
 
     def __getitem__(self, idx):
         """
-        根据索引 idx 提取一整个 Batch 的数据，并调用 batch2TrainData 格式化为 Tensors。
-        由于我们需要按 Batch 返回张量，所以 __getitem__ 内部是成批提取样本的。
+        根据索引 idx 提取单个样本的 (input, output) 元组。
+        由 DataLoader 批量加载并使用 collate_fn 整理。
         """
-        i = idx * batch_size
-        length = min(batch_size, (len(self.samples) - i))
-
-        pair_batch = []
-        for i_batch in range(length):
-            sample = self.samples[i + i_batch]
-            pair_batch.append((sample['input'], sample['output']))
-
-        # 返回适合网络输入的元组张量数据
-        return batch2TrainData(pair_batch)
+        sample = self.samples[idx]
+        return sample['input'], sample['output']
 
     def __len__(self):
         """
-        计算总共有多少个批次 (Batches)。
+        计算样本总数。
         """
-        return len(self.samples) // batch_size
+        return len(self.samples)
 
 
 if __name__ == '__main__':

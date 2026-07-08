@@ -122,11 +122,7 @@ def test_train_keyboard_interrupt(monkeypatch, tmp_path):
         def __len__(self):
             return 1
         def __getitem__(self, index):
-            # Return dummy values that fit the unpacking
-            # input_variable, lengths, target_variable, mask, max_target_len
-            import torch
-            return (torch.zeros(5, 4, dtype=torch.long), torch.tensor([5, 4, 3, 2]), 
-                    torch.zeros(5, 4, dtype=torch.long), torch.zeros(5, 4), 5)
+            return [1, 2, 3], [4, 5, 6]
 
     monkeypatch.setattr(data_gen, "ChatbotDataset", DummyDataset)
 
@@ -139,6 +135,7 @@ def test_train_keyboard_interrupt(monkeypatch, tmp_path):
     monkeypatch.setattr(train, "save_dir", str(tmp_path))
 
     # Mock other configurations/globals
+    monkeypatch.setattr(train, "workers", 0)
     monkeypatch.setattr(train, "start_epoch", 0)
     monkeypatch.setattr(train, "epochs", 5)
     monkeypatch.setattr(train, "loadFilename", None)
@@ -165,9 +162,7 @@ def test_auto_load_interrupted_checkpoint(monkeypatch, tmp_path):
         def __init__(self, split): pass
         def __len__(self): return 1
         def __getitem__(self, index):
-            import torch
-            return (torch.zeros(5, 4, dtype=torch.long), torch.tensor([5, 4, 3, 2]), 
-                    torch.zeros(5, 4, dtype=torch.long), torch.zeros(5, 4), 5)
+            return [1, 2, 3], [4, 5, 6]
     monkeypatch.setattr(data_gen, "ChatbotDataset", DummyDataset)
 
     # 2. Save a dummy interrupted checkpoint
@@ -195,6 +190,7 @@ def test_auto_load_interrupted_checkpoint(monkeypatch, tmp_path):
     }, checkpoint_path)
 
     # 3. Patch configs
+    monkeypatch.setattr(train, "workers", 0)
     monkeypatch.setattr(train, "save_dir", checkpoint_dir)
     monkeypatch.setattr(train, "loadFilename", "best")
     monkeypatch.setattr(train, "start_epoch", 0)
