@@ -70,14 +70,10 @@ $ uv run train.py --corpus ptt
 $ tensorboard --logdir path_to_current_dir/logs
 ```
 
-### 演示
-运行演示程序。同样支持 `--corpus` 传入（如果项目包含 demo.py）：
+### 人机交互对话
+运行以下命令即可启动终端交互，与你训练好的模型进行实时聊天：
 ```bash
-# 运行小黄鸡（默认）
-$ uv run demo.py
-
-# 运行 PTT
-$ uv run demo.py --corpus ptt
+$ uv run chat.py
 ```
 
 不正经的语料只能训练不正经的聊天机器人 ╮（﹀_﹀）╭
