@@ -263,64 +263,82 @@ def main():
     losses = AverageMeter()  
 
     # 5. 开启 Epoch 大循环
-    for epoch in range(epoch_start, epochs):
-        # 激活训练状态（允许激活 Dropout 等非确定层动作）
-        encoder.train()
-        decoder.train()
-
-        start = time.time()
-
-        # 遍历训练集 Batch 列表
-        for i in range(train_loader.__len__()):
-            input_variable, lengths, target_variable, mask, max_target_len = train_loader.__getitem__(i)
-            # 执行单步批训练，获得当前损失值
-            loss = train(input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder,
-                         encoder_optimizer, decoder_optimizer)
-
-            # 记录本步指标
-            losses.update(loss, max_target_len)
-            batch_time.update(time.time() - start)
+    epoch = epoch_start
+    try:
+        for epoch in range(epoch_start, epochs):
+            # 激活训练状态（允许激活 Dropout 等非确定层动作）
+            encoder.train()
+            decoder.train()
 
             start = time.time()
 
-            # 按配置规律打印日志
-            if i % print_every == 0:
-                print('[{0}] Epoch: [{1}][{2}/{3}]\t'
-                      '批处理耗时 {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      '交叉熵 Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(timestamp(), epoch, i, len(train_loader),
-                                                                       batch_time=batch_time,
-                                                                       loss=losses))
-        # ----------------------------------------------------
-        # 6. 每个 Epoch 结束后，在验证集上计算一次 Loss 损失
-        # ----------------------------------------------------
-        val_loss = validate(val_loader, encoder, decoder)
-        print('\n * 验证集损失 - {loss:.3f}\n'.format(loss=val_loss))
+            # 遍历训练集 Batch 列表
+            for i in range(train_loader.__len__()):
+                input_variable, lengths, target_variable, mask, max_target_len = train_loader.__getitem__(i)
+                # 执行单步批训练，获得当前损失值
+                loss = train(input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder,
+                             encoder_optimizer, decoder_optimizer)
 
-        # ----------------------------------------------------
-        # 7. 自动展示：随机抽取10句验证集句子让模型作答，直观评估当前模型水平
-        # ----------------------------------------------------
-        searcher = GreedySearchDecoder(encoder, decoder)
-        for sentence in pick_n_valid_sentences(10):
-            decoded_words = evaluate(searcher, sentence)
-            print('人类发问: {}'.format(sentence))
-            print('机器人作答: {}'.format(''.join(decoded_words)))
+                # 记录本步指标
+                losses.update(loss, max_target_len)
+                batch_time.update(time.time() - start)
 
-        # ----------------------------------------------------
-        # 8. 保存模型权重 Checkpoint
-        # ----------------------------------------------------
-        if epoch % save_every == 0:
-            directory = save_dir
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            torch.save({
-                'epoch': epoch,
-                'en': encoder.state_dict(),
-                'de': decoder.state_dict(),
-                'en_opt': encoder_optimizer.state_dict(),
-                'de_opt': decoder_optimizer.state_dict(),
-                'loss': loss,
-                'voc': voc.__dict__
-            }, os.path.join(directory, '{}_{}_{}.tar'.format('checkpoint', epoch, val_loss)))
+                start = time.time()
+
+                # 按配置规律打印日志
+                if i % print_every == 0:
+                    print('[{0}] Epoch: [{1}][{2}/{3}]\t'
+                          '批处理耗时 {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                          '交叉熵 Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(timestamp(), epoch, i, len(train_loader),
+                                                                           batch_time=batch_time,
+                                                                           loss=losses))
+            # ----------------------------------------------------
+            # 6. 每个 Epoch 结束后，在验证集上计算一次 Loss 损失
+            # ----------------------------------------------------
+            val_loss = validate(val_loader, encoder, decoder)
+            print('\n * 验证集损失 - {loss:.3f}\n'.format(loss=val_loss))
+
+            # ----------------------------------------------------
+            # 7. 自动展示：随机抽取10句验证集句子让模型作答，直观评估当前模型水平
+            # ----------------------------------------------------
+            searcher = GreedySearchDecoder(encoder, decoder)
+            for sentence in pick_n_valid_sentences(10):
+                decoded_words = evaluate(searcher, sentence)
+                print('人类发问: {}'.format(sentence))
+                print('机器人作答: {}'.format(''.join(decoded_words)))
+
+            # ----------------------------------------------------
+            # 8. 保存模型权重 Checkpoint
+            # ----------------------------------------------------
+            if epoch % save_every == 0:
+                directory = save_dir
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                torch.save({
+                    'epoch': epoch,
+                    'en': encoder.state_dict(),
+                    'de': decoder.state_dict(),
+                    'en_opt': encoder_optimizer.state_dict(),
+                    'de_opt': decoder_optimizer.state_dict(),
+                    'loss': loss,
+                    'voc': voc.__dict__
+                }, os.path.join(directory, '{}_{}_{}.tar'.format('checkpoint', epoch, val_loss)))
+    except KeyboardInterrupt:
+        print('\n[检测到键盘中断 (Ctrl+C)] 正在优雅退出...')
+        directory = save_dir
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        checkpoint_path = os.path.join(directory, 'checkpoint_interrupted.tar')
+        torch.save({
+            'epoch': epoch,
+            'en': encoder.state_dict(),
+            'de': decoder.state_dict(),
+            'en_opt': encoder_optimizer.state_dict(),
+            'de_opt': decoder_optimizer.state_dict(),
+            'loss': losses.avg,
+            'voc': voc.__dict__
+        }, checkpoint_path)
+        print('当前训练进度已优雅保存至: {}'.format(checkpoint_path))
 
 
 if __name__ == '__main__':

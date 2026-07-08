@@ -111,3 +111,45 @@ def test_save_load_checkpoint(tmp_path):
         assert torch.allclose(p1, p2)
 
 
+def test_train_keyboard_interrupt(monkeypatch, tmp_path):
+    import train
+    import data_gen
+
+    # Mock ChatbotDataset to be a dummy dataset that returns 1 batch
+    class DummyDataset:
+        def __init__(self, split):
+            pass
+        def __len__(self):
+            return 1
+        def __getitem__(self, index):
+            # Return dummy values that fit the unpacking
+            # input_variable, lengths, target_variable, mask, max_target_len
+            import torch
+            return (torch.zeros(5, 4, dtype=torch.long), torch.tensor([5, 4, 3, 2]), 
+                    torch.zeros(5, 4, dtype=torch.long), torch.zeros(5, 4), 5)
+
+    monkeypatch.setattr(data_gen, "ChatbotDataset", DummyDataset)
+
+    # Patch the train function to raise KeyboardInterrupt
+    def mock_train(*args, **kwargs):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr(train, "train", mock_train)
+    # Patch save_dir to point to tmp_path
+    monkeypatch.setattr(train, "save_dir", str(tmp_path))
+
+    # Mock other configurations/globals
+    monkeypatch.setattr(train, "start_epoch", 0)
+    monkeypatch.setattr(train, "epochs", 5)
+    monkeypatch.setattr(train, "loadFilename", None)
+
+    # Call train.main() which should exit gracefully and write a checkpoint
+    train.main()
+
+    # Verify that checkpoint_interrupted.tar was created in tmp_path
+    import os
+    expected_path = os.path.join(tmp_path, "checkpoint_interrupted.tar")
+    assert os.path.exists(expected_path)
+
+
+
