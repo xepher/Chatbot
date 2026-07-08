@@ -419,7 +419,7 @@ def main():
                     'voc': voc.__dict__
                 }, os.path.join(directory, '{}_{}_{}.tar'.format('checkpoint', epoch, val_loss)))
     except KeyboardInterrupt:
-        # 优雅退款与现场保护：如果用户手动按 Ctrl+C 中断，自动将当前训练现场转储，防止进度丢失
+        # 优雅退出与现场保护：如果用户手动按 Ctrl+C 中断，自动将当前训练现场转储，防止进度丢失
         print('\n[检测到键盘中断 (Ctrl+C)] 正在优雅退出...')
         directory = save_dir
         if not os.path.exists(directory):
