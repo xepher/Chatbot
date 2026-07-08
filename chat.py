@@ -10,10 +10,12 @@ from models import EncoderRNN, LuongAttnDecoderRNN
 from utils import GreedySearchDecoder, indexesFromSentence, find_checkpoint
 
 def main():
-    # 使用 argparse 来解析命令行参数，支持自定义选择 Checkpoint
+    # 使用 argparse 来解析命令行参数，支持自定义选择 Checkpoint 和语料库
     parser = argparse.ArgumentParser(description='交互式对话客户端')
     parser.add_argument('--checkpoint', '-cp', type=str, default=None,
                         help='指定加载的 Checkpoint 权重文件名或路径。若不指定，则按默认规则自动选择。')
+    parser.add_argument('--corpus', '-c', type=str, default='xhj', choices=['xhj', 'ptt'],
+                        help='指定语料库类型，可选值为 xhj (小黄鸡) 或 ptt (PTT语料)。默认为 xhj。')
     args = parser.parse_args()
 
     # 1. 定位 Checkpoint 权重文件

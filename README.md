@@ -71,12 +71,15 @@ $ tensorboard --logdir path_to_current_dir/logs
 ```
 
 ### 人机交互对话
-运行以下命令即可启动终端交互，默认自动选择**最新保存的 Checkpoint**（若有中断的备份包则优先加载备份包）进行实时聊天：
+运行以下命令即可启动终端交互，默认自动选择指定语料的**最新保存的 Checkpoint**（若有中断的备份包则优先加载备份包）进行实时聊天：
 ```bash
-# 默认方式（自动定位最新 Checkpoint）
+# 默认方式（自动定位并加载小黄鸡 xhj 最新 Checkpoint）
 $ uv run chat.py
 
-# 手动指定加载特定的 Checkpoint（支持路径或 models/ 目录下的文件名）
+# 选择 PTT 语料加载其最新 Checkpoint 进行聊天
+$ uv run chat.py --corpus ptt
+
+# 手动指定加载某个特定 Checkpoint
 $ uv run chat.py --checkpoint checkpoint_5_4.731982957099277.tar
 ```
 
