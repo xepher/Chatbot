@@ -94,9 +94,15 @@ def main():
                 print('对话结束，下回见！')
                 break
 
+            # 如果是 PTT 繁体语料库，自动将输入的简体字转换为繁体字，以匹配模型词表
+            input_sentence = sentence
+            if args.corpus == 'ptt':
+                import zhconv
+                input_sentence = zhconv.convert(sentence, 'zh-tw')
+
             # 转换为词 ID 序列 (若遇到词表外未知词会抛出 KeyError)
             try:
-                indexes_batch = [indexesFromSentence(voc, sentence)]
+                indexes_batch = [indexesFromSentence(voc, input_sentence)]
             except KeyError:
                 print('机器人作答 (Bot) > 听到了一些我没学过的生疏词汇，换个更简单的说法试试吧 ╮(﹀_﹀)╭')
                 print()
@@ -117,6 +123,11 @@ def main():
                              if token != EOS_token and token != PAD_token]
             
             response = "".join(decoded_words)
+            # 如果是 PTT 繁体语料库，自动将机器人输出的繁体字转换为简体字返回给用户
+            if args.corpus == 'ptt':
+                import zhconv
+                response = zhconv.convert(response, 'zh-cn')
+                
             print('机器人作答 (Bot) > {}'.format(response))
             print()
 
