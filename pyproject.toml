@@ -14,3 +14,11 @@ dependencies = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+
