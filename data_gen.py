@@ -1,5 +1,8 @@
 # encoding=utf-8
 import itertools
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="jieba")
+
 import jieba
 from torch.utils.data import Dataset
 from config import *

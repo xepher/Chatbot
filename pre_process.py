@@ -1,4 +1,7 @@
 # encoding=utf-8
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="jieba")
+
 from collections import Counter
 import jieba
 from tqdm import tqdm

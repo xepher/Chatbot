@@ -5,6 +5,9 @@ import random
 import re
 import time
 import unicodedata
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="jieba")
+
 import jieba
 from torch import nn
 from config import *
